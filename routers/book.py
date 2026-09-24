@@ -12,7 +12,7 @@ from services import chunking, embedd, extract, aipolish, db
 router = APIRouter(dependencies=[Depends(verify_auth_key)])
 
 
-@router.post("/ingest", response_model=UploadRes)
+@router.post("/upload", response_model=UploadRes)
 async def upload_doc(file: UploadFile = File(...)):
     suffix = Path(file.filename).suffix
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:

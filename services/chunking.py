@@ -5,7 +5,7 @@ from transformers import AutoTokenizer
 
 from config import settings
 
-# Use the same tokenizer as the embedding model so chunk sizes match its token limits.
+# same tokenizer the embedding model uses
 _tokenizer = AutoTokenizer.from_pretrained(settings.embed_model)
 
 
@@ -20,7 +20,7 @@ def _token_len(text: str) -> int:
 
 
 def _tail_by_tokens(text: str, target_tokens: int) -> str:
-    """Return the end of the text to carry into the next chunk."""
+    #retrieves overlap
     words = text.split()
     tail: list[str] = []
     for word in reversed(words):
@@ -31,11 +31,11 @@ def _tail_by_tokens(text: str, target_tokens: int) -> str:
 
 
 def chunk_text(text: str) -> list[Chunk]:
-    """Group paragraphs into token-limited chunks while preserving context."""
+    #splits text into chunks with overlap, based on token count
     tsize = settings.chunk_size
     toverlap = settings.chunk_overlap
 
-    paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
+    paras = [p.strip() for p in text.split("\n") if p.strip()]
 
     chunks: list[Chunk] = []
     current = ""
@@ -44,24 +44,30 @@ def chunk_text(text: str) -> list[Chunk]:
         if piece.strip():
             chunks.append(Chunk(text=piece.strip(), chunk_index=len(chunks)))
 
-    for para in paragraphs:
+    for para in paras:
         if _token_len(para) > tsize:
-            # Split long paragraphs at word boundaries when they do not fit.
+            # split a single paragraph into multiple chunks if it's too big for one
+            overlap = ""
+            if current:
+                flush(current)
+                overlap = _tail_by_tokens(current, toverlap)
+
             words = para.split()
-            piece = ""
+            piece = overlap
             for word in words:
-                trial = f"{piece} {word}".strip()
-                if _token_len(trial) > tsize:
+                temp = f"{piece} {word}".strip()
+                if _token_len(temp) > tsize:
                     flush(piece)
-                    piece = word
+                    overlap = _tail_by_tokens(piece, toverlap)
+                    piece = f"{overlap} {word}".strip()
                 else:
-                    piece = trial
+                    piece = temp
             current = piece
             continue
 
-        trial = f"{current}\n{para}".strip()
-        if _token_len(trial) <= tsize:
-            current = trial
+        temp = f"{current}\n{para}".strip()
+        if _token_len(temp) <= tsize:
+            current = temp
         else:
             flush(current)
             overlap = _tail_by_tokens(current, toverlap)

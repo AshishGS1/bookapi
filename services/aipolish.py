@@ -17,8 +17,5 @@ def generate_answer(query: str, chunks: list[str]) -> str:
     context = "\n\n---\n\n".join(chunks)
     prompt = _PROMPT_TEMPLATE.format(context=context, query=query)
 
-    response = _client.models.generate_content(
-        model=settings.gemini_model,
-        contents=prompt,
-    )
+    response = _client.models.generate_content(model=settings.gemini_model,contents=prompt,)
     return response.text
