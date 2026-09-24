@@ -17,5 +17,6 @@ def generate_answer(query: str, chunks: list[str]) -> str:
     context = "\n\n---\n\n".join(chunks)
     prompt = _PROMPT_TEMPLATE.format(context=context, query=query)
 
-    response = _client.models.generate_content(model=settings.gemini_model,contents=prompt,)
+    chat = _client.chats.create(model=settings.gemini_model)
+    response = chat.send_message(message=prompt)
     return response.text
