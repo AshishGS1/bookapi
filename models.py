@@ -19,7 +19,6 @@ class SrcChunk(BaseModel):
     chunk_index: int
     doc_id: str
 
-
 class QueryRes(BaseModel):
     answer: str
     sources: list[SrcChunk]

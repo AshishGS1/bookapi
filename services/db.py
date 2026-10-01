@@ -2,6 +2,7 @@ import hashlib
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
+from models import SrcChunk
 
 from config import settings
 
@@ -44,11 +45,11 @@ def search(query_vector: list[float], top_k: int) -> list[dict]:
         limit=top_k,
     )
     return [
-        {
-            "text": point.payload["text"],
-            "score": point.score,
-            "chunk_index": point.payload["chunk_index"],
-            "doc_id": point.payload["doc_id"],
-        }
+        SrcChunk(
+            text= point.payload["text"],
+            score= point.score,
+            chunk_index= point.payload["chunk_index"],
+            doc_id= point.payload["doc_id"],
+        )
         for point in result.points
-    ]
+    ] #use model here

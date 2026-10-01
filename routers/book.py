@@ -20,11 +20,11 @@ async def upload_doc(file: UploadFile = File(...)):
         tmp_path = tmp.name
 
     try:
+        # db.ensure_collection() redundant since lifespan already ensures collection.
         doc_id = Path(file.filename).stem
         text = extract.extract_text(tmp_path)
         chunks = chunking.chunk_text(text)
         vectors = embedd.embed_chunks([c.text for c in chunks])
-        db.ensure_collection()
         db.upsert_chunks(doc_id, [c.text for c in chunks], vectors)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
@@ -37,5 +37,5 @@ async def query_doc(payload: QueryReq):
     top_k = payload.top_k or settings.top_k
     query_vector = embedd.embed_query(payload.query)
     hits = db.search(query_vector, top_k)
-    answer = aipolish.generate_answer(payload.query, [h["text"] for h in hits])
-    return QueryRes(answer=answer, sources=[SrcChunk(**h) for h in hits])
+    answer = aipolish.generate_answer(payload.query, [h.text for h in hits])
+    return QueryRes(answer=answer, sources=hits)
